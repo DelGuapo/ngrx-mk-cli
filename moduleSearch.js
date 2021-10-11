@@ -1,6 +1,8 @@
 
-var findNodeModules = require('find-node-modules');
+// var findNodeModules = require('find-node-modules');
+
 const fs = require('fs');
+
 
 const FindTargetModules = function (path, target = '') {
     ignoredDirs = ['.git', 'dist', 'environments', 'node_modules', '.vscode', '.vs'];

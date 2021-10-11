@@ -1,5 +1,6 @@
 const yargs = require('yargs');
 const rdx = require('./reduxHelper');
+const find = require('./find');
 const argv = yargs
     .command('initStore', 'Initializes a store module within an angular module', {
         initStore: {
@@ -96,6 +97,8 @@ const argv = yargs
     .argv;
 
 const cmd = argv['_'];
+
+console.log(find.Objects('*index*'));
 
 if (cmd.length == 0) {
     console.log(`Please specify command`)
