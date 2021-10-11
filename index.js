@@ -1,5 +1,5 @@
 const yargs = require('yargs');
-
+const rdx = require('./reduxHelper');
 const argv = yargs
     .command('initStore', 'Initializes a store module within an angular module', {
         initStore: {
@@ -63,8 +63,8 @@ const argv = yargs
         type: 'boolean',
         default: true
     })
-    .option('angularModule', {
-        alias: 'ng',
+    .option('module', {
+        alias: 'mod',
         description: 'Add Effects Module to Angular Module',
         type: 'string',
         default: 'app.module'
@@ -86,11 +86,10 @@ const argv = yargs
         description: 'Prefix of selector',
         type: 'string',
         default: "sel"
-    }).option('selectorPrefix', {
+    }).option('project', {
         alias: 'prj',
         description: 'Defines which project to search.  Only applicable to angular project scaffolding.',
-        type: 'string',
-        default: "sel"
+        type: 'string'
     })
     .help()
     .alias('help', 'h')
@@ -105,7 +104,12 @@ if (cmd.length == 0) {
 
 if (cmd.includes('initStore')) {
     console.log("=============[ INITIALIZE STORE ]===============");
+    if (argv.mod == undefined || argv.module == ''){
+        console.log(`Please specify angular module with -angularModule or --ng`)
+        process.exit(1)
+    }
     console.log(argv)
+    rdx.InitStore(argv.mod,argv.prj);
 }
 
 if (cmd.includes('addStore')) {

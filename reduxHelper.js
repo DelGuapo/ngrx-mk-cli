@@ -1,6 +1,6 @@
 
 const modSearch = require('./moduleSearch');
-
+const fs = require('fs');
 
 const upperFirstChar = function (str) {
     if (str == '') {
@@ -28,9 +28,12 @@ const NameFile = function (name, prefix, postfix, cammelCase) {
     return upperFirstChar(prefix) + upperFirstChar(name) + upperFirstChar(postfix);
 }
 
-const InitStore = function () {
-    var module = modSearch.FindModule('app.module', 'agg-portal');
-    var modContent = modSearch.ParseModule(module);
+const InitStore = function (modName, projectName = undefined) {
+    console.log("MOD NAME - " + modName,"PROJ NAME " +  projectName)
+    var modulePath = modSearch.FindModule(modName, projectName);
+    console.log(modulePath);
+    var modContent = modSearch.ParseModule(modulePath);
+    console.log(modContent);
 }
 const AddStore = function () {
     var module = modSearch.FindModule('app.module', 'agg-portal');
@@ -70,9 +73,7 @@ const ParseTemplate = function (templateType) {
 }
 
 module.exports = {
-    FindModule: FindModule,
     NameFile: NameFile,
-    ParseModule: ParseModule,
     InitStore: InitStore,
     AddStore: InitStore,
     AddAction: AddAction
