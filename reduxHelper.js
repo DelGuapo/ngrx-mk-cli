@@ -1,5 +1,3 @@
-
-const modSearch = require('./moduleSearch');
 const fs = require('fs');
 const find = require('./find');
 const DIR_CHAR = '\\';
@@ -73,12 +71,10 @@ const buildImportStatement = function (modName, storeName, fileName, relativeDir
 
 
 const AddStore = function () {
-    var module = modSearch.FindModule('app.module', 'agg-portal');
-    var modContent = modSearch.ParseModule(module);
+
 }
 const AddAction = function () {
-    var module = modSearch.FindModule('app.module', 'agg-portal');
-    var modContent = modSearch.ParseModule(module);
+
 }
 const FindTemplate = function (templateType) {
     switch (templateType) {
