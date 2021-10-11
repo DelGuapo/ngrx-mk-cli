@@ -98,8 +98,6 @@ const argv = yargs
 
 const cmd = argv['_'];
 
-console.log(find.Objects('*index*'));
-
 if (cmd.length == 0) {
     console.log(`Please specify command`)
     process.exit(1)
@@ -111,7 +109,6 @@ if (cmd.includes('initStore')) {
         console.log(`Please specify angular module with -angularModule or --ng`)
         process.exit(1)
     }
-    console.log(argv)
     rdx.InitStore(argv.mod,argv.prj);
 }
 
