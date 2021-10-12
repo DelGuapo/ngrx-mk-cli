@@ -3,8 +3,10 @@ const find = require('./find');
 const DIR_CHAR = '\\';
 const STATE_DIR = "state";
 const STATE_TS = "app.store.ts";
-const MOD_EFFECTS = "APP_EFFECTS"
-
+const MOD_EFFECTS = "REDUX_APP_EFFECTS"
+const PARENT_APP_STORE = "APP_STORE"
+const MOD_REF_POINT = "const " + MOD_EFFECTS + " = [";
+const WELCOME_MESSAGE = "HELLO WORLD FROM REDUX HELPER";
 
 const upperFirstChar = function (str) {
     if (str == '') {
@@ -36,39 +38,135 @@ const jsonContent = function (path, projName) {
     return JSON.parse(jsn);
 }
 
+const readAngularModuleContent = function (mod) {
+    return fs.readFileSync(mod.ANGULAR_MODULE, 'utf8');
+}
+
+const getNgModuleConfig = function (str) {
+    const regex = new RegExp(/(?<=\@NgModule\()(.*?)(?=\))/, 'sg');
+    const match = str.match(regex)
+    if (!match || match.length > 1) {
+        throwExc("Could not parse @NgModule tag");
+    }
+    return match[0];
+}
+
+const insertNgModuleImport = function (newImportArray, modContent) {
+    const regexImports = new RegExp(/(imports:\s\[(.*?)\])/, 'sg');
+    const match = modContent.match(regexImports)
+    if (!match || match.length > 1) {
+        throwExc("Could not parse @NgModule.imports");
+    }
+    importContent = match[0];
+    whiteSpace = "\n\t";
+    try {
+        const regWhite = new RegExp(/\[\s+(?=[^\s\\])/, 'sg')
+        const whiteGroups = importContent.match(regWhite);
+        whiteSpace = whiteGroups[0];
+        whiteSpace = whiteSpace.replace('[', '');
+    } catch (err) {
+    }
+    regexImpItems = new RegExp(/(?<=\[).+?(?=\])/, 'sg')
+    importItems = importContent.match(regexImpItems);
+    importArr = importItems[0].split(',').concat(newImportArray.map(imp => whiteSpace + imp))
+    return modContent.replace(regexImports, "imports:[" + importArr.join(",") + "]");
+}
+
+const WriteFile = function (filePath, content) {
+    try {
+        fs.writeFileSync(filePath, content)
+        console.log("Created file " + filePath);
+    } catch (err) {
+        throwExc("Could not create file " + filePath);
+    }
+}
+
+const seedEffectsIntoAngularMod = function (mod) {
+    txt = readAngularModuleContent(mod);
+    return txt.replace('@NgModule', MOD_REF_POINT + "LogEffects]; \n\n@NgModule")
+}
+
+const findRefPointRegex = function(str){
+    regex = new RegExp(/(?<=REDUX_APP_EFFECTS).*$/,"s");
+    return str.match(regex)
+}
+
+const findFirstOccuranceInSquareBrackets = function(str){
+    regex = new RegExp(/(?<=\[).+?(?=\])/,"s");
+    return str.match(regex)[0]
+}
+
+const listSuffInSquareBrackets = function(str){
+    regex = new RegExp(/(?<=\[).+?(?=\])/,"sg");
+    return str.match(regex);
+}
+
+const listEffectModules = function(modContent){
+    str = findRefPointRegex(modContent)[0];
+    effc =  findFirstOccuranceInSquareBrackets(str);
+    return effc.split(",");
+}
+
+const appendEffectIntoAngularMod = function (newEffect,modContent) {
+    effects = listEffectModules(modContent);
+    effects.push(newEffect);
+    oldRefMatch = findRefPointRegex(modContent);
+    regEffects = new RegExp(/(?<=\[).+?(?=\])/,"s");
+    newRef = oldRefMatch[0].replace(regEffects,effects.join(','));
+    newMod = modContent.substring(0,oldRefMatch.index) + newRef
+    console.log(newMod);
+    return newMod;
+}
+
+
+const prependRefTag = function (strArray, modContent) {
+    return strArray.reduce((p, c) => {
+        p = p.replace(MOD_REF_POINT, c + '\n' + MOD_REF_POINT)
+        return p;
+    }, modContent);
+}
+
+const createDirs = function (dirs) {
+    dirs.map(dir => {
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+    })
+
+}
+
 const InitStore = function (mod, proj = undefined) {
     mod = GetPaths(mod, proj);
-    const ngModContent = fs.readFileSync(mod.ANGULAR_MODULE, 'utf8');
-    // console.log(ngModContent.replace('@NgModule', 'const APP_EFFECTS = [LogEffects]\n\n@NgModule'));
-    const modPrepends = [
+    modContent = seedEffectsIntoAngularMod(mod);
+    modContent = prependRefTag([
         "import { StoreModule } from '@ngrx/store';",
         "import { EffectsModule } from '@ngrx/effects';",
         "import { StoreDevtoolsModule } from '@ngrx/store-devtools';",
-        "\n\n",
+        "/* " + WELCOME_MESSAGE + " */",
+        buildImportStoreStatement("LogEffects", "", popTs(STATE_TS), "."),
+        "",
         "const isLocalHost = window.location.href.indexOf('localhost') > -1;",
-        buildImportStatement("LogEffects", "", popTs(STATE_TS), "."),
-        "const " + MOD_EFFECTS + " = [LogEffects];"
-    ]
-    const modImportStatements = [
+    ], modContent);
+
+    modContent = insertNgModuleImport([
         "StoreModule.forRoot({})",
         "EffectsModule.forRoot(" + MOD_EFFECTS + ")",
-        "StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: isLocalHost}),"
-    ]
-    const newDirectories = [
-        mod.NGRX_ROOT
-    ]
+        "StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: isLocalHost})"
+    ], modContent);
+    createDirs(mod.NGRX_ROOT)
+    WriteFile(mod.ANGULAR_MODULE,modContent);
+    
     const newFiles = [
         mod.PARENT_NGRX_MODULE
     ]
-    console.log(newDirectories, newFiles, modPrepends, modImportStatements);
+    // console.log(newDirectories, newFiles, modPrepends, modImportStatements);
 }
 
-const buildImportStatement = function (modName, storeName, fileName, relativeDir) {
+const buildImportStoreStatement = function (modName, storeName, fileName, relativeDir) {
     return (storeName == "") ?
         "import { " + modName + " } from '" + relativeDir + "/" + STATE_DIR + "/" + fileName + "';" :
         "import { " + modName + " } from '" + relativeDir + "/" + STATE_DIR + "/" + storeName + "/" + fileName + "';";
 }
-
 
 const AddStore = function () {
 

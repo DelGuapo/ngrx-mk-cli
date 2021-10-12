@@ -39,7 +39,8 @@ const findObjects = function (searchPattern, cwd) {
 	return modulesArray;
 };
 
-const findDown = function (path, target = '') {
+const findDown = function (path, target = []) {
+	const targets = target.map(t=>t.toLowerCase());
 	ignoredDirs = ['.git', '.bin', 'dist', 'environments', 'node_modules', '.vscode', '.vs'];
 	const lastFile = path.split(dirChar).pop();
 	if (ignoredDirs.indexOf(lastFile) > -1) {
@@ -47,11 +48,11 @@ const findDown = function (path, target = '') {
 	}
 	const rsp = fs.readdirSync(path, { withFileTypes: true })
 		.filter(dirent => {
-			return dirent.isDirectory() || dirent.name.toLowerCase() == target.toLowerCase();
+			return dirent.isDirectory() || targets.indexOf(dirent.name.toLowerCase()) > -1;
 		})
 		.filter(f => ignoredDirs.indexOf(f.name) == -1)
 		.reduce((p, c) => {
-			if (c.name == target) {
+			if (targets.indexOf(c.name) > -1) {
 				p.push(path + c.name);
 			} else {
 				p = p.concat([...findDown(path + c.name + dirChar, target)])
@@ -69,7 +70,7 @@ const FromRootDownwards = function (file) {
 		if (dir == '') {
 			return p;
 		}
-		dirs = findDown(dir, file);
+		dirs = findDown(dir, [file]);
 		return [...dirs]
 	}, []);
 }
@@ -88,7 +89,14 @@ const AngularProjectFile = function (projName = undefined, moduleName = undefine
 	/* extract project path from angular.json */
 	angJsonPath = angJson[0];
 	const angJsonContent = jsonContent(angJsonPath);
-	const sourceRoot = angJsonContent['projects'][projName]['sourceRoot'].replace(/\//g, dirChar);
+
+	const projConfig = angJsonContent['projects'][projName];
+
+	if(projConfig == undefined){
+		throwExc("Could not find project " + projName + " in your angular.json file.")
+	}
+
+	const sourceRoot = projConfig['sourceRoot'].replace(/\//g, dirChar);
 
 	/* find index.ts relative to project root */
 	const sourceRootRelative = angJsonPath.replace('angular.json', sourceRoot);
@@ -96,14 +104,15 @@ const AngularProjectFile = function (projName = undefined, moduleName = undefine
 	sourceRootArray.pop();
 	sourceRootProject = sourceRootArray.join(dirChar) + dirChar
 
-	projModule = findDown(sourceRootProject,moduleName);
+	console.log("Project Config Identified: " + sourceRootProject);
+
+	projModule = findDown(sourceRootProject,[moduleName]);
 
 	if(projModule.length == 1){
 		return projModule[0];
 	}
 
-	const src = findDown(sourceRootProject, 'index.ts');
-	
+	const src = findDown(sourceRootProject, ['index.ts','public-api.ts']);
 	if (src.length != 1){
 		throwExc("Multiple index.ts found in project path")
 	}
@@ -114,7 +123,7 @@ const AngularProjectFile = function (projName = undefined, moduleName = undefine
 	}
 	modArray = idxTs.split(dirChar);
 	modArray.pop();
-	return modArray.join(dirChar) + dirChar + expt;
+	return modArray.join(dirChar) + dirChar +  addTs(expt);
 }
 
 const AngularModule = function (modName, projectName = undefined) {
