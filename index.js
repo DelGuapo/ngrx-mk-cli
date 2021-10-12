@@ -8,6 +8,17 @@ const argv = yargs
             type: 'number',
         }
     })
+    .option('project', {
+        alias: 'prj',
+        description: 'Defines which project to search.  Only applicable to angular project scaffolding.',
+        type: 'string'
+    })
+    .option('module', {
+        alias: 'ng',
+        description: 'Add Effects Module to Angular Module',
+        type: 'string',
+        default: 'app.module'
+    })
     .command('addStore', 'Builds a store and injects into your existing parent store module', {
         addStore: {
             description: 'Builds a store and injects into your existing parent store module',
@@ -15,25 +26,6 @@ const argv = yargs
             requiresArg: ['store', 'parent']
         }
     })
-    .command('addAction', 'Injects an action into the provided store module', {
-        addAction: {
-            description: 'Injects an action into the provided store module',
-            type: 'number',
-        }
-    })
-    .option('store', {
-        alias: 's',
-        description: 'Name of action|store',
-        type: 'string',
-        requiresArg: true,
-    })
-    .option('parentStore', {
-        alias: 'ps',
-        description: 'Name of parent store',
-        type: 'string',
-        default: 'app'
-    })
-
     .option('actions', {
         alias: 'ac',
         description: 'Add Actions Class',
@@ -64,12 +56,7 @@ const argv = yargs
         type: 'boolean',
         default: true
     })
-    .option('module', {
-        alias: 'mod',
-        description: 'Add Effects Module to Angular Module',
-        type: 'string',
-        default: 'app.module'
-    })
+
     .option('actionPrefix', {
         alias: 'apx',
         description: 'Prefix of Action',
@@ -87,16 +74,52 @@ const argv = yargs
         description: 'Prefix of selector',
         type: 'string',
         default: "sel"
-    }).option('project', {
-        alias: 'prj',
-        description: 'Defines which project to search.  Only applicable to angular project scaffolding.',
-        type: 'string'
+    })
+    .command('addAction', 'Injects an action into the provided store module', {
+        addAction: {
+            description: 'Injects an action into the provided store module',
+            type: 'number',
+        }
+    })
+    .option('store', {
+        alias: 'st',
+        description: 'Name of Store to add action',
+        type: 'string',
+        requiresArg: true,
+    })
+    .option('name', {
+        alias: 'n',
+        description: 'Name of action',
+        type: 'string',
+        requiresArg: true,
+    })
+    .option('effects', {
+        alias: 'ef',
+        description: 'Add Action in Effects Class',
+        type: 'boolean',
+        default: true
+    })
+    .option('reducers', {
+        alias: 'rd',
+        description: 'Add Reducers Class',
+        type: 'boolean',
+        default: true
     })
     .help()
     .alias('help', 'h')
     .argv;
 
 const cmd = argv['_'];
+
+const isEmpty = function(str){
+    console.log(str);
+    return str == undefined || str == '' || str == null;
+}
+
+if (isEmpty(argv.module)) {
+    console.log(`Please specify angular module with -=module or -ng`)
+    process.exit(1)
+}
 
 if (cmd.length == 0) {
     console.log(`Please specify command`)
@@ -105,16 +128,12 @@ if (cmd.length == 0) {
 
 if (cmd.includes('initStore')) {
     console.log("=============[ INITIALIZE STORE ]===============");
-    if (argv.mod == undefined || argv.module == ''){
-        console.log(`Please specify angular module with -angularModule or --ng`)
-        process.exit(1)
-    }
-    rdx.InitStore(argv.mod,argv.prj);
+    rdx.InitStore(argv.module, argv.prj);
 }
 
 if (cmd.includes('addStore')) {
     console.log("=============[ ADD STORE ]===============");
-    console.log(argv)
+    rdx.InitStore(argv.mod, argv.name);
 }
 
 if (cmd.includes('addAction')) {

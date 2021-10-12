@@ -32,11 +32,11 @@ export const %ACTION_PREFIX%%ACTION_NAME%Trigger = createAction('[%STORE_NAME%] 
     return template;
 }
 
-const ActionFileHeader = function () {
+const NewActionsFile = function () {
     return "import { createAction, props } from '@ngrx/store';";
 }
 
-const ParentAppStoreFile = function () {
+const NewParentAppStoreFile = function () {
     template = `
 import { createAction } from '@ngrx/store';
 import { Injectable } from '@angular/core';
@@ -112,7 +112,7 @@ const NewSelectorsFile = function () {
     const template = `
 import { createSelector, createFeatureSelector } from '@ngrx/store';
 
-export const %storeName%Store = createFeatureSelector<%PARENT_STORE%, %STORE_NAME%>('%storeName%');
+export const %storeName%Store = createFeatureSelector<%PARENT_APP_STORE%, %STORE_NAME%>('%storeName%');
 
 export const SelectStoreLoading = createSelector(
     %storeName%Store,
@@ -149,13 +149,13 @@ import {
     %ACTION_PREFIX%DemoTrigger,
     %ACTION_PREFIX%DemoResponse
 } from './%storeName%.actions';
-import { %PARENT_STORE%Store } from '../%parentStore%.models';
+import { %PARENT_APP_STORE%Store } from '../%parentAppStore%.models';
 
 @Injectable()
 export class %STORE_NAME%StoreEffects {
     constructor(
         private actions$: Actions<Action>,
-        private store: Store<%PARENT_STORE%Store>,
+        private store: Store<%PARENT_APP_STORE%Store>,
         private %storeName%Service: %STORE_NAME%Service,
     ) { }
     
@@ -183,17 +183,18 @@ export class %STORE_NAME%Service {
 
 module.exports = {
     ActionResponse: ActionResponse,
-    ActionFileHeader: ActionFileHeader,
-    ParentAppStoreFile: ParentAppStoreFile,
     ActionTrigger: ActionTrigger,
     EffectChain: EffectChain,
-    NewEffectFile: NewEffectFile,
     ActionEffectChain: ActionEffectChain,
     NoActionEffectChain: NoActionEffectChain,
-    NewReducerModuleFile: NewReducerModuleFile,
-    NewModelsFile: NewModelsFile,
     ReducerResponse: ReducerResponse,
     ReducerTrigger: ReducerTrigger,
+
+    NewActionsFile: NewActionsFile,
+    NewModelsFile: NewModelsFile,
+    NewParentAppStoreFile: NewParentAppStoreFile,
+    NewEffectFile: NewEffectFile,
+    NewReducerModuleFile: NewReducerModuleFile,
     NewSelectorsFile: NewSelectorsFile,
-    NewServiceFile: NewServiceFile
+    NewServiceFile: NewServiceFile,
 };
