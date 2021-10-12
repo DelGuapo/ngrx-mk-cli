@@ -1,5 +1,6 @@
 const fs = require('fs');
 const find = require('./find');
+const templateBuild = require('./reduxTemplate');
 const DIR_CHAR = '\\';
 const STATE_DIR = "state";
 const STATE_TS = "app.store.ts";
@@ -86,34 +87,34 @@ const seedEffectsIntoAngularMod = function (mod) {
     return txt.replace('@NgModule', MOD_REF_POINT + "LogEffects]; \n\n@NgModule")
 }
 
-const findRefPointRegex = function(str){
-    regex = new RegExp(/(?<=REDUX_APP_EFFECTS).*$/,"s");
+const findRefPointRegex = function (str) {
+    regex = new RegExp(/(?<=REDUX_APP_EFFECTS).*$/, "s");
     return str.match(regex)
 }
 
-const findFirstOccuranceInSquareBrackets = function(str){
-    regex = new RegExp(/(?<=\[).+?(?=\])/,"s");
+const findFirstOccuranceInSquareBrackets = function (str) {
+    regex = new RegExp(/(?<=\[).+?(?=\])/, "s");
     return str.match(regex)[0]
 }
 
-const listSuffInSquareBrackets = function(str){
-    regex = new RegExp(/(?<=\[).+?(?=\])/,"sg");
+const listSuffInSquareBrackets = function (str) {
+    regex = new RegExp(/(?<=\[).+?(?=\])/, "sg");
     return str.match(regex);
 }
 
-const listEffectModules = function(modContent){
+const listEffectModules = function (modContent) {
     str = findRefPointRegex(modContent)[0];
-    effc =  findFirstOccuranceInSquareBrackets(str);
+    effc = findFirstOccuranceInSquareBrackets(str);
     return effc.split(",");
 }
 
-const appendEffectIntoAngularMod = function (newEffect,modContent) {
+const appendEffectIntoAngularMod = function (newEffect, modContent) {
     effects = listEffectModules(modContent);
     effects.push(newEffect);
     oldRefMatch = findRefPointRegex(modContent);
-    regEffects = new RegExp(/(?<=\[).+?(?=\])/,"s");
-    newRef = oldRefMatch[0].replace(regEffects,effects.join(','));
-    newMod = modContent.substring(0,oldRefMatch.index) + newRef
+    regEffects = new RegExp(/(?<=\[).+?(?=\])/, "s");
+    newRef = oldRefMatch[0].replace(regEffects, effects.join(','));
+    newMod = modContent.substring(0, oldRefMatch.index) + newRef
     console.log(newMod);
     return newMod;
 }
@@ -132,7 +133,6 @@ const createDirs = function (dirs) {
             fs.mkdirSync(dir);
         }
     })
-
 }
 
 const InitStore = function (mod, proj = undefined) {
@@ -153,9 +153,11 @@ const InitStore = function (mod, proj = undefined) {
         "EffectsModule.forRoot(" + MOD_EFFECTS + ")",
         "StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: isLocalHost})"
     ], modContent);
+
+    return;
     createDirs(mod.NGRX_ROOT)
-    WriteFile(mod.ANGULAR_MODULE,modContent);
-    
+    WriteFile(mod.ANGULAR_MODULE, modContent);
+
     const newFiles = [
         mod.PARENT_NGRX_MODULE
     ]
