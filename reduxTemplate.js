@@ -251,7 +251,7 @@ const HowToUseTemplate = function(){
 import { Store, select } from '@ngrx/store';
 import { %PARENT_APP_STORE% } from './state/app.store';
 import { %SELECTOR_PREFIX%%STORE_UPPER% } from './state/%store%/%store%.selectors'
-import { %ACTION_PREFIX%DemoTrigger } from './state/%store%/spc.actions';
+import { %ACTION_PREFIX%DemoTrigger } from './state/%store%/%store%/.actions';
 
 
 demoSelector$: Observable<any>;
