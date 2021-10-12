@@ -2,12 +2,6 @@ const yargs = require('yargs');
 const rdx = require('./reduxHelper');
 const find = require('./find');
 const argv = yargs
-    .command('test', 'test a store module within an angular module', {
-        initStore: {
-            description: 'test a store module within an angular module',
-            type: 'number',
-        }
-    })
     .command('initStore', 'Initializes a store module within an angular module', {
         initStore: {
             description: 'Initializes a store module within an angular module',
@@ -62,7 +56,6 @@ const argv = yargs
         type: 'boolean',
         default: true
     })
-
     .option('actionPrefix', {
         alias: 'apx',
         description: 'Prefix of Action',
@@ -81,36 +74,36 @@ const argv = yargs
         type: 'string',
         default: "sel"
     })
-    .command('addAction', 'Injects an action into the provided store module', {
+    .command('addAction', 'IN PROGRESS!!! Injects an action into the provided store module', {
         addAction: {
-            description: 'Injects an action into the provided store module',
+            description: 'IN PROGRESS!!! Injects an action into the provided store module',
             type: 'number',
         }
     })
-    .option('store', {
-        alias: 'st',
-        description: 'Name of Store to add action',
-        type: 'string',
-        requiresArg: true,
-    })
+    // .option('store', {
+    //     alias: 'st',
+    //     description: 'Name of Store to add action',
+    //     type: 'string',
+    //     requiresArg: true,
+    // })
     .option('name', {
         alias: 'n',
         description: 'Name of action',
         type: 'string',
         requiresArg: true,
     })
-    .option('effects', {
-        alias: 'ef',
-        description: 'Add Action in Effects Class',
-        type: 'boolean',
-        default: true
-    })
-    .option('reducers', {
-        alias: 'rd',
-        description: 'Add Reducers Class',
-        type: 'boolean',
-        default: true
-    })
+    // .option('effects', {
+    //     alias: 'ef',
+    //     description: 'Add Action in Effects Class',
+    //     type: 'boolean',
+    //     default: true
+    // })
+    // .option('reducers', {
+    //     alias: 'rd',
+    //     description: 'Add Reducers Class',
+    //     type: 'boolean',
+    //     default: true
+    // })
     .help()
     .alias('help', 'h')
     .argv;
@@ -155,6 +148,6 @@ if (cmd.includes('addStore')) {
 }
 
 if (cmd.includes('addAction')) {
-    console.log("=============[ ADD ACTION ]===============");
-    console.log(argv)
+    console.log("IN PROGRESS");
+    // console.log(argv)
 }
