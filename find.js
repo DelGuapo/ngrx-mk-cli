@@ -103,11 +103,7 @@ const AngularProjectFile = function (projName = undefined, moduleName = undefine
 	const sourceRootArray = sourceRootRelative.split(dirChar);
 	sourceRootArray.pop();
 	sourceRootProject = sourceRootArray.join(dirChar) + dirChar
-
-	console.log("Project Config Identified: " + sourceRootProject);
-
 	projModule = findDown(sourceRootProject,[moduleName]);
-
 	if(projModule.length == 1){
 		return projModule[0];
 	}

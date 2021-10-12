@@ -14,11 +14,9 @@ on(%ACTION_PREFIX%%ACTION_NAME%Trigger, (state, { input }) => {
     return template;
 }
 
-
-
 const ActionResponse = function () {
     template = `
-export const %ACTION_PREFIX%%ACTION_NAME%Response = createAction('[%STORE_NAME%] %ACTION_PREFIX%%ACTION_NAME%Response',
+export const %ACTION_PREFIX%%ACTION_NAME%Response = createAction('[%STORE_UPPER%] %ACTION_NAME%Response',
     props<{ output: any }>()
 )`
     return template;
@@ -26,14 +24,18 @@ export const %ACTION_PREFIX%%ACTION_NAME%Response = createAction('[%STORE_NAME%]
 
 const ActionTrigger = function () {
     template = `
-export const %ACTION_PREFIX%%ACTION_NAME%Trigger = createAction('[%STORE_NAME%] %ACTION_PREFIX%%ACTION_NAME%Trigger',
+export const %ACTION_PREFIX%%ACTION_NAME%Trigger = createAction('[%STORE_UPPER%] %ACTION_NAME%Trigger',
     props<{ input: any }>()
 );`
     return template;
 }
 
 const NewActionsFile = function () {
-    return "import { createAction, props } from '@ngrx/store';";
+    const template =  "import { createAction, props } from '@ngrx/store';\n\n/* Add new actions to your store in this file*/";
+    const trigg = ActionTrigger().replace(new RegExp(/\%ACTION_NAME%/, 'g'), 'Demo')
+    const rsp = ActionResponse().replace(new RegExp(/\%ACTION_NAME%/, 'g'), 'Demo')
+    
+    return template + trigg + rsp;
 }
 
 const NewParentAppStoreFile = function () {
@@ -101,9 +103,10 @@ const EffectChain = function (effectChainFunction) {
 
 const NewModelsFile = function () {
     template = `
-export interface %STORE_NAME%Store = {
-    loading : boolean;
-    %storeName% : any;
+/* this file will contain any models associated with your %STORE_NAME%.  Add new models below */
+export interface %STORE_NAME% {
+    loading: boolean;
+    %storeName%: any;
 }`
     return template;
 }
@@ -111,12 +114,20 @@ export interface %STORE_NAME%Store = {
 const NewSelectorsFile = function () {
     const template = `
 import { createSelector, createFeatureSelector } from '@ngrx/store';
+import { %PARENT_APP_STORE% } from '../%parentStoreRoot%.store';
+import {
+    %STORE_NAME%
+} from './%store%.models';
 
-export const %storeName%Store = createFeatureSelector<%PARENT_APP_STORE%, %STORE_NAME%>('%storeName%');
+export const %storeName% = createFeatureSelector<%PARENT_APP_STORE%, %STORE_NAME%>('%store%');
 
-export const SelectStoreLoading = createSelector(
-    %storeName%Store,
-    (store: %STORE_NAME%Store) => store.loading
+export const %SELECTOR_PREFIX%Loading = createSelector(
+    %storeName%,
+    (store: %STORE_NAME%) => store.loading
+)
+export const %SELECTOR_PREFIX%%STORE_UPPER% = createSelector(
+    %storeName%,
+    (store: %STORE_NAME%) => store.%store%
 )
 `
     return template;
@@ -126,14 +137,14 @@ const NewReducerModuleFile = function () {
     const template = `
 import { NgModule } from '@angular/core';
 import { StoreModule } from '@ngrx/store';
-import * as %STORE_NAME%Reducer from './%storeName%.reducers';
+import * as %STORE_NAME%Reducer from './%store%.reducers';
 
 @NgModule({
     imports: [
         StoreModule.forFeature('%storeName%', %STORE_NAME%Reducer.reducer)
     ]
 })
-export class %STORE_NAME%ReducerModule { }`
+export class %STORE_NAME%Module { }`
     return template;
 }
 
@@ -144,21 +155,38 @@ import { of, zip } from 'rxjs';
 import { switchMap, catchError, mergeMap, withLatestFrom, concatMap } from 'rxjs/operators';
 import { Actions, ofType, createEffect } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
-import { %STORE_NAME%Service } from './%storeName%.service';
+import { %STORE_UPPER%Service } from './%store%.service';
 import {
     %ACTION_PREFIX%DemoTrigger,
     %ACTION_PREFIX%DemoResponse
-} from './%storeName%.actions';
-import { %PARENT_APP_STORE%Store } from '../%parentAppStore%.models';
+} from './%store%.actions';
+import { %PARENT_APP_STORE% } from '../%parentStoreRoot%.store';
 
 @Injectable()
-export class %STORE_NAME%StoreEffects {
+export class %STORE_NAME%Effects {
     constructor(
         private actions$: Actions<Action>,
-        private store: Store<%PARENT_APP_STORE%Store>,
-        private %storeName%Service: %STORE_NAME%Service,
+        private store: Store<%PARENT_APP_STORE%>,
+        private %store%Service: %STORE_UPPER%Service,
     ) { }
     
+
+    %EFFECT_PREFIX%Demo$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(%ACTION_PREFIX%DemoTrigger),
+            switchMap(action => {
+                const req$ = this.%store%Service.Demo$(action.input);
+                return zip(of(action), req$)
+            }),
+            switchMap(([action, rsp]) => [
+                %ACTION_PREFIX%DemoResponse({ output: rsp })
+            ]),
+            catchError((err, cought) => {
+                console.error(err);
+                return cought;
+            })
+        )
+    )
 }`
     return template;
 }
@@ -170,15 +198,80 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 
 @Injectable()
-export class %STORE_NAME%Service {
+export class %STORE_UPPER%Service {
     constructor(
         private http: HttpClient
     ) {}
-    %actionName%$(val: string):Observable<any>{
-        return of("HELLO WORLD: [" + val + "], FROM YOUR %STORE_NAME%Service, the %actionName% function");
+    Demo$(val: string):Observable<any>{
+        return of("HELLO WORLD: [" + val + "], FROM YOUR %STORE_UPPER%Service, the demo function");
     }
 }
 `
+return template;
+}
+
+
+const NewReducerFile = function () {
+    template = `
+import { createReducer, on, Action } from '@ngrx/store';
+import {
+    %ACTION_PREFIX%DemoTrigger,
+    %ACTION_PREFIX%DemoResponse
+} from './%store%.actions';
+
+import {
+    %STORE_NAME%
+} from './%store%.models';
+
+const initial%STORE_UPPER%State: %STORE_NAME% = {
+    loading: false,
+    %store%: undefined
+}
+
+export const %STORE_NAME%Reducer = createReducer(
+    initial%STORE_UPPER%State,
+    on(%ACTION_PREFIX%DemoTrigger, (state) => {
+        return { ...state, loading: true, %store%: undefined }
+    }),
+    on(%ACTION_PREFIX%DemoResponse, (state, { output }) => {
+        return { ...state, loading: false, %store%: output }
+    })
+);
+
+export function reducer(state: %STORE_NAME% | undefined, action: Action) {
+    return %STORE_NAME%Reducer(state, action);
+}
+`
+return template;
+}
+
+const HowToUseTemplate = function(){
+    template = `
++++++++++++++[    IN YOUR COMPONENT CLASS   ]++++++++++++++
+import { Store, select } from '@ngrx/store';
+import { %PARENT_APP_STORE% } from './state/app.store';
+import { %SELECTOR_PREFIX%%STORE_UPPER% } from './state/%store%/%store%.selectors'
+import { %ACTION_PREFIX%DemoTrigger } from './state/%store%/spc.actions';
+
+
+demoSelector$: Observable<any>;
+constructor(..., private store: Store<%PARENT_APP_STORE%>) {
+    this.demoSelector$ = store.pipe(select(%SELECTOR_PREFIX%%STORE_UPPER%))
+}
+triggerYourEffect(){
+    this.store.dispatch(%ACTION_PREFIX%DemoTrigger({ input: "Your Input Value" }));
+}
+
+
++++++++++++++[    IN YOUR COMPONENT HTML   ]++++++++++++++
+
+<button (click)="triggerYourEffect()">TRIGGER YOUR ACTION </button>
+
+<h6>Your Content will show below asynchronously</h6>
+<code *ngIf="demoSelector$ | async AS yourContent"> {{yourContent}}</code>
+    
+`
+    return template;
 }
 
 module.exports = {
@@ -197,4 +290,9 @@ module.exports = {
     NewReducerModuleFile: NewReducerModuleFile,
     NewSelectorsFile: NewSelectorsFile,
     NewServiceFile: NewServiceFile,
+    NewReducerFile: NewReducerFile,
+    HowToUseTemplate: HowToUseTemplate
 };
+
+
+

@@ -2,6 +2,12 @@ const yargs = require('yargs');
 const rdx = require('./reduxHelper');
 const find = require('./find');
 const argv = yargs
+    .command('test', 'test a store module within an angular module', {
+        initStore: {
+            description: 'test a store module within an angular module',
+            type: 'number',
+        }
+    })
     .command('initStore', 'Initializes a store module within an angular module', {
         initStore: {
             description: 'Initializes a store module within an angular module',
@@ -61,7 +67,7 @@ const argv = yargs
         alias: 'apx',
         description: 'Prefix of Action',
         type: 'string',
-        default: "axn"
+        default: "action"
     })
     .option('effectPrefix', {
         alias: 'epx',
@@ -111,9 +117,15 @@ const argv = yargs
 
 const cmd = argv['_'];
 
-const isEmpty = function(str){
+const isEmpty = function (str) {
     console.log(str);
     return str == undefined || str == '' || str == null;
+}
+
+const PREFIXES = {
+    'ACTION':argv.apx || '',
+    'EFFECT':argv.epx || '',
+    'SELECTOR':argv.spx || '',
 }
 
 if (isEmpty(argv.module)) {
@@ -126,6 +138,12 @@ if (cmd.length == 0) {
     process.exit(1)
 }
 
+if (cmd.includes('test')){
+    console.log("=============[ TEST ]===============");
+    
+    // rdx.Test(argv.name, PREFIXES, argv.module, argv.prj);
+}
+
 if (cmd.includes('initStore')) {
     console.log("=============[ INITIALIZE STORE ]===============");
     rdx.InitStore(argv.module, argv.prj);
@@ -133,7 +151,7 @@ if (cmd.includes('initStore')) {
 
 if (cmd.includes('addStore')) {
     console.log("=============[ ADD STORE ]===============");
-    rdx.InitStore(argv.mod, argv.name);
+    rdx.AddStore(argv.name, PREFIXES, argv.module, argv.prj);
 }
 
 if (cmd.includes('addAction')) {
