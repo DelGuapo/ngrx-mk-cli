@@ -127,8 +127,10 @@ export const %SELECTOR_PREFIX%Loading = createSelector(
 )
 export const %SELECTOR_PREFIX%%STORE_UPPER% = createSelector(
     %storeName%,
-    (store: %STORE_NAME%) => store.%store%
-)
+    (store: %STORE_NAME%) => {
+        console.log("NGRX - SELECTOR: your %SELECTOR_PREFIX%%STORE_UPPER% returns a stream of the most recent value in your store");
+        return store.%store%;
+    })
 `
     return template;
 }
@@ -160,7 +162,7 @@ import {
     %ACTION_PREFIX%DemoTrigger,
     %ACTION_PREFIX%DemoResponse
 } from './%store%.actions';
-import { %PARENT_APP_STORE% } from '../%parentStoreRoot%.store';
+import { %PARENT_APP_STORE%, NoAction } from '../%parentStoreRoot%.store';
 
 @Injectable()
 export class %STORE_NAME%Effects {
@@ -175,12 +177,15 @@ export class %STORE_NAME%Effects {
         this.actions$.pipe(
             ofType(%ACTION_PREFIX%DemoTrigger),
             switchMap(action => {
+                console.log("NGRX - EFFECT: upon invoking [%ACTION_PREFIX%DemoTrigger], n chain of effects is followed.  The effect must be an observable.");
                 const req$ = this.%store%Service.Demo$(action.input);
                 return zip(of(action), req$)
             }),
-            switchMap(([action, rsp]) => [
-                %ACTION_PREFIX%DemoResponse({ output: rsp })
-            ]),
+            switchMap(([action, rsp]) => {
+                console.log("NGRX - EFFECT: The response to the %store%Service.Demo$ function has been received. In this example, [%ACTION_PREFIX%DemoTrigger] invokes [%ACTION_PREFIX%DemoResponse].  You can add other actions in this response array to trigger multiple actions.  If you don't need a response, use NoAction()");
+                return [%ACTION_PREFIX%DemoResponse({ output: rsp }),NoAction()]
+                // return [NoAction()]   /* <<=== this is used if you do not require any response actions to be invoked. */
+            }),
             catchError((err, cought) => {
                 console.error(err);
                 return cought;
@@ -196,6 +201,7 @@ const NewServiceFile = function () {
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { delay } from 'rxjs/operators';
 
 @Injectable()
 export class %STORE_UPPER%Service {
@@ -203,7 +209,9 @@ export class %STORE_UPPER%Service {
         private http: HttpClient
     ) {}
     Demo$(val: string):Observable<any>{
-        return of("HELLO WORLD: [" + val + "], FROM YOUR %STORE_UPPER%Service, the demo function");
+        console.log("NGRX - SERVICE: the Demo$ function simulates an HTTP request by piping a 3 second delay");
+        return of("HELLO WORLD: [" + val + "], FROM YOUR %STORE_UPPER%Service, the demo function")
+            .pipe(delay(3000));
     }
 }
 `
@@ -244,9 +252,11 @@ const initial%STORE_UPPER%State: %STORE_NAME% = {
 export const %STORE_NAME%Reducer = createReducer(
     initial%STORE_UPPER%State,
     on(%ACTION_PREFIX%DemoTrigger, (state, { input }) => {
+        console.log("NGRX - REDUCER: Your app state is immutible, and can only be changed within your reducer.  The %ACTION_PREFIX%DemoTrigger changes the app-state here");
         return { ...state, loading: true, %store%: undefined }
     }),
     on(%ACTION_PREFIX%DemoResponse, (state, { output }) => {
+        console.log("NGRX - REDUCER: Your app state is immutible, and can only be changed within your reducer.  The %ACTION_PREFIX%DemoResponse changes the app-state here");
         return { ...state, loading: false, %store%: output }
     })
 );
@@ -263,12 +273,16 @@ const HowToUseNewStoreTemplate = function () {
 +++++++++++++[    IN YOUR COMPONENT CLASS   ]++++++++++++++
 import { Store, select } from '@ngrx/store';
 import { %PARENT_APP_STORE% } from './state/app.store';
-import { %SELECTOR_PREFIX%%STORE_UPPER% } from './state/%store%/%store%.selectors'
+import { %SELECTOR_PREFIX%%STORE_UPPER%, %SELECTOR_PREFIX%Loading } from './state/%store%/%store%.selectors'
 import { %ACTION_PREFIX%DemoTrigger } from './state/%store%/%store%.actions';
 
 demoSelector$: Observable<any>;
-constructor(..., private store: Store<%PARENT_APP_STORE%>) {
-    this.demoSelector$ = store.pipe(select(%SELECTOR_PREFIX%%STORE_UPPER%))
+loading$: Observable<boolean>;
+constructor(..., 
+    private store: Store<%PARENT_APP_STORE%>
+) {
+    this.demoSelector$ = store.pipe(select(%SELECTOR_PREFIX%%STORE_UPPER%));
+    this.loading$ = store.pipe(select(%SELECTOR_PREFIX%Loading)); 
 }
 triggerYourEffect(){
     this.store.dispatch(%ACTION_PREFIX%DemoTrigger({ input: "Your Input Value" }));
@@ -277,10 +291,10 @@ triggerYourEffect(){
 
 +++++++++++++[    IN YOUR COMPONENT HTML   ]++++++++++++++
 
-<button (click)="triggerYourEffect()">TRIGGER YOUR ACTION </button>
+<button (click)="triggerYourEffect()">TRIGGER YOUR ACTION <span *ngIf="loading$ | async">Loding. . . </span></button>
 
 <h6>Your Content will show below asynchronously</h6>
-<code *ngIf="demoSelector$ | async AS yourContent"> {{yourContent}}</code>
+<code *ngIf="demoSelector$ | async as yourContent"> {{yourContent}}</code>
     
 `
     return template;

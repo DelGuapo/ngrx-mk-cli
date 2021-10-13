@@ -1,5 +1,6 @@
 const { Console } = require('console');
 const fs = require('fs');
+const { CONSOLE_APPENDER } = require('karma/lib/constants');
 const find = require('./find');
 const templateBuild = require('./reduxTemplate');
 const DIR_CHAR = '\\';
@@ -176,7 +177,7 @@ const FetchStoreContent = function (modName, proj = undefined) {
     return fs.readFileSync(mod.PARENT_NGRX_MODULE, 'utf8');
 }
 
-const InitStore = function (modName, proj = undefined) {
+const Initialize = function (modName, proj = undefined) {
     mod = GetPaths(modName, proj);
     createDir(mod.NGRX_ROOT)
     WriteFile(mod.PARENT_NGRX_MODULE,
@@ -303,7 +304,7 @@ const AddAction = function (action, store, prefixObj, modName, proj = undefined,
     idxLastServ = serviceContent.lastIndexOf("}");
     serviceContent = serviceContent.substring(0, idxLastServ)
     serviceContent += newServiceFunction + "\n}\n";
-    WriteFile(FILE_NAME + '.service.ts', effectsContent);
+    WriteFile(FILE_NAME + '.service.ts', serviceContent);
 
 
 
@@ -324,17 +325,17 @@ const AddStore = function (name, prefixObj, modName, proj = undefined) {
     STORE_NAME = upperFirstChar(rootName) + 'Store';
     mod = GetPaths(modName, proj);
     STORE_DIR = mod.NGRX_ROOT + DIR_CHAR + rootName;
-
     modContent = FetchAngModContent(modName, proj);
+    existingExports = listEffectMods(modContent);
+    if (existingExports.length == 0) {
+        console.log("Store not yet initialized.  Run the [init] command.");
+        return 1;
+    }
     storeContent = FetchStoreContent(modName, proj);
     storeContent = insertNewSubStore(`${rootName}:${STORE_NAME}`, storeContent)
     storeContent = `import { ${STORE_NAME} } from './${rootName}/${rootName}.models';` + storeContent;
 
-    existingExports = listEffectMods(modContent);
-    if (existingExports.length == 0) {
-        console.log("Store not yet initialized.  Run initStore command.");
-        return 1;
-    }
+    
     if (existingExports.indexOf(`${STORE_NAME}Effects`) > -1) {
         console.log(`The ${rootName} cannot be added; There is already a ${STORE_NAME}Effects imported into your angular module.  Aborting`);
         return 1;
@@ -473,7 +474,7 @@ const Test = function (storeName, modName, proj = undefined) {
 }
 
 module.exports = {
-    InitStore: InitStore,
+    Initialize: Initialize,
     AddStore: AddStore,
     GetPaths: GetPaths,
     ListModules: ListEffectsInModule,

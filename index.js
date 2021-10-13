@@ -2,7 +2,7 @@ const yargs = require('yargs');
 const rdx = require('./reduxHelper');
 const find = require('./find');
 const argv = yargs
-    .command('initStore', 'Initializes a store module within an angular module', {
+    .command('init', 'Initializes a store module within an angular module', {
         initStore: {
             description: 'Initializes a store module within an angular module',
             type: 'number',
@@ -144,9 +144,9 @@ if (cmd.includes('test')) {
     rdx.Test(argv.name, PREFIXES, argv.module, argv.prj);
 }
 
-if (cmd.includes('initStore')) {
+if (cmd.includes('init')) {
     console.log("=============[ INITIALIZE STORE ]===============");
-    rdx.InitStore(argv.module, argv.prj);
+    rdx.Initialize(argv.module, argv.prj);
 }
 
 if (cmd.includes('addStore')) {
