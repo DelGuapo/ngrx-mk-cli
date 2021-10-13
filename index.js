@@ -26,6 +26,13 @@ const argv = yargs
             requiresArg: ['store', 'parent']
         }
     })
+    .command('list', 'List ngrx effect modules within ng module', {
+        addStore: {
+            description: 'ist ngrx effect modules within ng module',
+            type: 'number',
+            requiresArg: ['store', 'parent']
+        }
+    })
     .option('actions', {
         alias: 'ac',
         description: 'Add Actions Class',
@@ -80,35 +87,36 @@ const argv = yargs
             type: 'number',
         }
     })
-    // .option('store', {
-    //     alias: 'st',
-    //     description: 'Name of Store to add action',
-    //     type: 'string',
-    //     requiresArg: true,
-    // })
+    .option('store', {
+        alias: 'st',
+        description: 'Name of Store to add new object',
+        type: 'string',
+        requiresArg: true,
+    })
     .option('name', {
         alias: 'n',
         description: 'Name of action',
         type: 'string',
         requiresArg: true,
     })
-    // .option('effects', {
-    //     alias: 'ef',
-    //     description: 'Add Action in Effects Class',
-    //     type: 'boolean',
-    //     default: true
-    // })
-    // .option('reducers', {
-    //     alias: 'rd',
-    //     description: 'Add Reducers Class',
-    //     type: 'boolean',
-    //     default: true
-    // })
+    .option('effects', {
+        alias: 'ef',
+        description: 'Add Action in Effects Class',
+        type: 'boolean',
+        default: true
+    })
+    .option('reducers', {
+        alias: 'rd',
+        description: 'Add Reducers Class',
+        type: 'boolean',
+        default: true
+    })
     .help()
     .alias('help', 'h')
     .argv;
 
 const cmd = argv['_'];
+
 
 const isEmpty = function (str) {
     console.log(str);
@@ -116,9 +124,9 @@ const isEmpty = function (str) {
 }
 
 const PREFIXES = {
-    'ACTION':argv.apx || '',
-    'EFFECT':argv.epx || '',
-    'SELECTOR':argv.spx || '',
+    'ACTION': argv.apx || '',
+    'EFFECT': argv.epx || '',
+    'SELECTOR': argv.spx || '',
 }
 
 if (isEmpty(argv.module)) {
@@ -131,10 +139,9 @@ if (cmd.length == 0) {
     process.exit(1)
 }
 
-if (cmd.includes('test')){
+if (cmd.includes('test')) {
     console.log("=============[ TEST ]===============");
-    
-    // rdx.Test(argv.name, PREFIXES, argv.module, argv.prj);
+    rdx.Test(argv.name, PREFIXES, argv.module, argv.prj);
 }
 
 if (cmd.includes('initStore')) {
@@ -144,10 +151,16 @@ if (cmd.includes('initStore')) {
 
 if (cmd.includes('addStore')) {
     console.log("=============[ ADD STORE ]===============");
-    rdx.AddStore(argv.name, PREFIXES, argv.module, argv.prj);
+    rdx.AddStore(argv.name || argv.store, PREFIXES, argv.module, argv.prj,argv);
 }
 
 if (cmd.includes('addAction')) {
-    console.log("IN PROGRESS");
-    // console.log(argv)
+    console.log("=============[ ADD ACTION ]===============");
+    rdx.AddAction(argv.name,argv.store, PREFIXES, argv.module, argv.prj,argv);
+}
+
+if (cmd.includes('list')) {
+    console.log("=============[ ADD ACTION ]===============");
+    rsp = rdx.ListModules(argv.module, argv.prj);
+    console.log(rsp);
 }

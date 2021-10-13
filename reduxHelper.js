@@ -25,27 +25,6 @@ const cleanStoreName = function (name) {
     return name.toLowerCase().replace('store', '');
 }
 
-const NameFile = function (name, prefix, postfix, cammelCase) {
-    if (nm == '') {
-        console.log(`Mising Name`)
-        process.exit(1)
-    }
-    if (!cammelCase) {
-        return upperFirstChar(prefix) + upperFirstChar(name) + upperFirstChar(postfix);
-    }
-
-    if (prefix == "") {
-        return upperFirstChar(name) + upperFirstChar(postfix);
-    }
-
-    return upperFirstChar(prefix) + upperFirstChar(name) + upperFirstChar(postfix);
-}
-
-const jsonContent = function (path, projName) {
-    jsn = fs.readFileSync(path, 'utf8');
-    return JSON.parse(jsn);
-}
-
 const readAngularModuleContent = function (mod) {
     return fs.readFileSync(mod.ANGULAR_MODULE, 'utf8');
 }
@@ -56,13 +35,13 @@ const insertNewSubStore = function (newStoreName, parentStoreContent) {
     }
     importContent = storeMatch;
     importIdxBegin = storeMatch.index;
-    importIdxEnd = parentStoreContent.indexOf('{',importIdxBegin) + 1;
+    importIdxEnd = parentStoreContent.indexOf('{', importIdxBegin) + 1;
     whiteSpace = "\n\t";
     newStuff = whiteSpace + newStoreName + ',' + '\n'
-    const preNewStuff = parentStoreContent.substring(0,importIdxBegin);
+    const preNewStuff = parentStoreContent.substring(0, importIdxBegin);
     const postNewStuff = parentStoreContent.substring(importIdxEnd + 1);
-    const importPhrase = parentStoreContent.substring(importIdxBegin,importIdxEnd)
-    return preNewStuff + importPhrase +  newStuff + postNewStuff;
+    const importPhrase = parentStoreContent.substring(importIdxBegin, importIdxEnd)
+    return preNewStuff + importPhrase + newStuff + postNewStuff;
 }
 
 const insertNgModuleImport = function (newImportArray, modContent) {
@@ -72,7 +51,7 @@ const insertNgModuleImport = function (newImportArray, modContent) {
     }
     importContent = importMatch;
     importIdxBegin = importMatch.index;
-    importIdxEnd = modContent.indexOf('[',importIdxBegin) + 1;
+    importIdxEnd = modContent.indexOf('[', importIdxBegin) + 1;
     whiteSpace = "\n\t";
     try {
         const regWhite = new RegExp(/\[\s+(?=[^\s\\])/, 'sg')
@@ -82,10 +61,10 @@ const insertNgModuleImport = function (newImportArray, modContent) {
     } catch (err) {
     }
     newStuff = newImportArray.map(imp => whiteSpace + imp).join(",") + ','
-    const preNewStuff = modContent.substring(0,importIdxBegin);
+    const preNewStuff = modContent.substring(0, importIdxBegin);
     const postNewStuff = modContent.substring(importIdxEnd + 1);
-    const importPhrase = modContent.substring(importIdxBegin,importIdxEnd)
-    return preNewStuff + importPhrase +  newStuff + postNewStuff;
+    const importPhrase = modContent.substring(importIdxBegin, importIdxEnd)
+    return preNewStuff + importPhrase + newStuff + postNewStuff;
 }
 
 const insertNgModuleProvider = function (newImportArray, modContent) {
@@ -95,7 +74,7 @@ const insertNgModuleProvider = function (newImportArray, modContent) {
     }
     importContent = importMatch;
     importIdxBegin = importMatch.index;
-    importIdxEnd = modContent.indexOf('[',importIdxBegin) + 1;
+    importIdxEnd = modContent.indexOf('[', importIdxBegin) + 1;
     whiteSpace = "\n\t";
     try {
         const regWhite = new RegExp(/\[\s+(?=[^\s\\])/, 'sg')
@@ -105,10 +84,10 @@ const insertNgModuleProvider = function (newImportArray, modContent) {
     } catch (err) {
     }
     newStuff = newImportArray.map(imp => whiteSpace + imp).join(",") + ','
-    const preNewStuff = modContent.substring(0,importIdxBegin);
+    const preNewStuff = modContent.substring(0, importIdxBegin);
     const postNewStuff = modContent.substring(importIdxEnd + 1);
-    const importPhrase = modContent.substring(importIdxBegin,importIdxEnd)
-    return preNewStuff + importPhrase +  newStuff + postNewStuff;
+    const importPhrase = modContent.substring(importIdxBegin, importIdxEnd)
+    return preNewStuff + importPhrase + newStuff + postNewStuff;
 }
 
 const WriteFile = function (filePath, content) {
@@ -144,9 +123,12 @@ const listEffectMods = function (modContent) {
     effc = findFirstOccuranceInSquareBrackets(refPoint[0]);
     return effc.split(",");
 }
+
 const ListEffectsInModule = function (modName, proj = undefined) {
     modContent = FetchAngModContent(modName, proj);
-    return listEffectMods(modContent);
+    return listEffectMods(modContent).map(rsp => {
+        return rsp.replace('StoreEffects', '').toLowerCase();
+    }).filter(rsp => rsp && rsp != 'logeffects');
 }
 
 const appendEffectIntoAngularMod = function (newEffect, modContent) {
@@ -159,6 +141,16 @@ const appendEffectIntoAngularMod = function (newEffect, modContent) {
     return newMod;
 }
 
+function injectStringAfterRegexMatch(content, regEx, injection) {
+    const rsp = regEx.exec(content);
+    if (!Array.isArray(rsp)) {
+        return content;
+    }
+    foundIdx = rsp.index;
+    matchContent = rsp[0];
+    idx = foundIdx + matchContent.length;
+    return content.substring(0, idx) + injection + content.substring(idx);
+}
 
 const prependRefTag = function (strArray, modContent) {
     return strArray.reduce((p, c) => {
@@ -230,6 +222,101 @@ const buildImportStoreStatement = function (modName, storeName, fileName, relati
         "import { " + modName + " } from '" + relativeDir + "/" + STATE_DIR + "/" + storeName + "/" + fileName + "';";
 }
 
+const AddAction = function (action, store, prefixObj, modName, proj = undefined, args) {
+    rootStoreName = cleanStoreName(store);
+    actionName = cleanStoreName(action);
+    actionNameUpper = upperFirstChar(actionName);
+    rootStoreNameUpper = upperFirstChar(rootStoreName);
+    existingStores = ListEffectsInModule(modName, proj);
+    if (existingStores.indexOf(rootStoreName) == -1) {
+        throwExc(`Store name [${rootStoreName}] does not exist.  To add a store, use the "addStore" command`)
+    }
+
+    mod = GetPaths(modName, proj);
+    STORE_DIR = mod.NGRX_ROOT + DIR_CHAR + rootStoreName + DIR_CHAR
+
+    FILE_NAME = STORE_DIR + rootStoreName
+
+    /*
+        BUILD IMPORT ACTION STATEMENT
+    */
+    importActionStatement = templateBuild.ImportActionsStatement()
+        .replace(new RegExp(/\%ACTION_PREFIX%/, 'g'), prefixObj.ACTION)
+        .replace(new RegExp(/\%store%/, 'g'), rootStoreName)
+        .replace(new RegExp(/\%ACTION_NAME%/, 'g'), actionNameUpper)
+
+    /* 
+        MODIFY ACTIONS FILE 
+    */
+    actionsContent = fs.readFileSync(FILE_NAME + '.actions.ts', 'utf8');
+    newActionStr = templateBuild.ActionTrigger() + templateBuild.ActionResponse();
+    actionsContent += newActionStr
+        .replace(new RegExp(/\%ACTION_PREFIX%/, 'g'), prefixObj.ACTION)
+        .replace(new RegExp(/\%store%/, 'g'), rootStoreName)
+        .replace(new RegExp(/\%ACTION_NAME%/, 'g'), actionNameUpper)
+    WriteFile(FILE_NAME + '.actions.ts', actionsContent)
+
+    /* 
+        MODIFY REDUCER FILE
+    */
+    reducerContent = fs.readFileSync(FILE_NAME + '.reducers.ts', 'utf8');
+    reducerContent = importActionStatement + reducerContent;
+
+    newReducerBlob = templateBuild.ReducerTrigger() + templateBuild.ReducerResponse();
+    newReducerBlob = newReducerBlob.replace(new RegExp(/\%ACTION_PREFIX%/, 'g'), prefixObj.ACTION)
+        .replace(new RegExp(/\%store%/, 'g'), rootStoreName)
+        .replace(new RegExp(/\%ACTION_NAME%/, 'g'), actionNameUpper)
+
+    regexString = `export\\s*const\\s*${rootStoreName}storereducer\\s*=\\s*createreducer\\(\\s*initial${rootStoreName}state\\,`;
+    const regex = new RegExp(regexString, 'gi');
+
+    reducerContent = injectStringAfterRegexMatch(reducerContent, regex, newReducerBlob)
+
+    WriteFile(FILE_NAME + '.reducers.ts', reducerContent)
+
+    /* 
+        MODIFY EFFECTS FILE
+    */
+    newEffectsBlob = templateBuild.EffectChain(templateBuild.ResponseEffectChain())
+        .replace(new RegExp(/\%storeName%/, 'g'), rootStoreNameUpper)
+        .replace(new RegExp(/\%store%/, 'g'), rootStoreName)
+        .replace(new RegExp(/\%actionName%/, 'g'), actionName)
+        .replace(new RegExp(/\%EFFECT_PREFIX%/, 'g'), prefixObj.EFFECT)
+        .replace(new RegExp(/\%ACTION_PREFIX%/, 'g'), prefixObj.ACTION)
+        .replace(new RegExp(/\%ACTION_NAME%/, 'g'), actionNameUpper)
+
+
+    effectsContent = fs.readFileSync(FILE_NAME + '.effects.ts', 'utf8');
+    effectsContent = importActionStatement + effectsContent;
+    idxLast = effectsContent.lastIndexOf("}");
+    effectsContent = effectsContent.substring(0, idxLast)
+    effectsContent += newEffectsBlob + "\n}\n";
+    WriteFile(FILE_NAME + '.effects.ts', effectsContent);
+
+    /* 
+        MODIFY SERVICE FILE
+    */
+    newServiceFunction = templateBuild.NewServiceFunction()
+        .replace(new RegExp(/\%ACTION_NAME%/, 'g'), actionNameUpper)
+
+    serviceContent = fs.readFileSync(FILE_NAME + '.service.ts', 'utf8');
+    idxLastServ = serviceContent.lastIndexOf("}");
+    serviceContent = serviceContent.substring(0, idxLastServ)
+    serviceContent += newServiceFunction + "\n}\n";
+    WriteFile(FILE_NAME + '.service.ts', effectsContent);
+
+
+
+    const howTo = templateBuild.HowToUseNewActionTemplate()
+
+        .replace(new RegExp(/\%PARENT_APP_STORE%/, 'g'), PARENT_APP_STORE)
+        .replace(new RegExp(/\%ACTION_PREFIX%/, 'g'), prefixObj.ACTION)
+        .replace(new RegExp(/\%store%/, 'g'), rootStoreName)
+        .replace(new RegExp(/\%ACTION_NAME%/, 'g'), actionNameUpper)
+    console.log(howTo)
+    return 0;
+}
+
 const AddStore = function (name, prefixObj, modName, proj = undefined) {
     const rootName = cleanStoreName(name);
     const rootNameUpper = upperFirstChar(rootName);
@@ -239,8 +326,8 @@ const AddStore = function (name, prefixObj, modName, proj = undefined) {
     STORE_DIR = mod.NGRX_ROOT + DIR_CHAR + rootName;
 
     modContent = FetchAngModContent(modName, proj);
-    storeContent = FetchStoreContent(modName,proj);
-    storeContent = insertNewSubStore(`${rootName}:${STORE_NAME}`,storeContent)
+    storeContent = FetchStoreContent(modName, proj);
+    storeContent = insertNewSubStore(`${rootName}:${STORE_NAME}`, storeContent)
     storeContent = `import { ${STORE_NAME} } from './${rootName}/${rootName}.models';` + storeContent;
 
     existingExports = listEffectMods(modContent);
@@ -286,7 +373,7 @@ const AddStore = function (name, prefixObj, modName, proj = undefined) {
     WriteFile(STORE_DIR + DIR_CHAR + rootName + ".actions.ts",
         templateBuild.NewActionsFile()
             .replace(new RegExp(/\%ACTION_PREFIX%/, 'g'), prefixObj.ACTION)
-            .replace(new RegExp(/\%STORE_UPPER%/, 'g'), rootNameUpper)
+            .replace(new RegExp(/\%store%/, 'g'), rootName)
     );
 
     /* MODULE */
@@ -341,12 +428,12 @@ const AddStore = function (name, prefixObj, modName, proj = undefined) {
     ], modContent);
     modContent = insertNgModuleProvider([
         `${rootNameUpper}Service`,
-    ],modContent);
+    ], modContent);
     // console.log("======== SAVING TO FILE ===============");
     WriteFile(mod.ANGULAR_MODULE, modContent);
-    WriteFile(mod.PARENT_NGRX_MODULE,storeContent);
+    WriteFile(mod.PARENT_NGRX_MODULE, storeContent);
 
-    const howTo = templateBuild.HowToUseTemplate()
+    const howTo = templateBuild.HowToUseNewStoreTemplate()
         .replace(new RegExp(/\%PARENT_APP_STORE%/, 'g'), PARENT_APP_STORE)
         .replace(new RegExp(/\%STORE_NAME%/, 'g'), STORE_NAME)
         .replace(new RegExp(/\%storeName%/, 'g'), storeName)
@@ -386,12 +473,11 @@ const Test = function (storeName, modName, proj = undefined) {
 }
 
 module.exports = {
-    NameFile: NameFile,
     InitStore: InitStore,
     AddStore: AddStore,
     GetPaths: GetPaths,
-    ListEffectsInModule: ListEffectsInModule,
-    Test: AddStore,
+    ListModules: ListEffectsInModule,
+    AddAction: AddAction
 };
 
 
