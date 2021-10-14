@@ -270,7 +270,10 @@ export function reducer(state: %STORE_NAME% | undefined, action: Action) {
 
 const HowToUseNewStoreTemplate = function () {
     template = `
-+++++++++++++[    IN YOUR COMPONENT CLASS   ]++++++++++++++
+/***************************************
+ * Thanks for using the CLI.  Here is sample code for your
+ * new [%store%] store.
+ * ************************************/
 import { Store, select } from '@ngrx/store';
 import { %PARENT_APP_STORE% } from './state/app.store';
 import { %SELECTOR_PREFIX%%STORE_UPPER%, %SELECTOR_PREFIX%Loading } from './state/%store%/%store%.selectors'
@@ -279,9 +282,7 @@ import { Observable } from 'rxjs';
 
 demoSelector$: Observable<any>;
 loading$: Observable<boolean>;
-constructor(..., 
-    private store: Store<%PARENT_APP_STORE%>
-) {
+constructor(private store: Store<%PARENT_APP_STORE%>) {
     this.demoSelector$ = store.pipe(select(%SELECTOR_PREFIX%%STORE_UPPER%));
     this.loading$ = store.pipe(select(%SELECTOR_PREFIX%Loading)); 
 }
@@ -290,12 +291,15 @@ triggerYourEffect(){
 }
 
 
-+++++++++++++[    IN YOUR COMPONENT HTML   ]++++++++++++++
-
-<button (click)="triggerYourEffect()">TRIGGER YOUR ACTION <span *ngIf="loading$ | async">Loding. . . </span></button>
+<button (click)="triggerYourEffect()">
+    TRIGGER YOUR ACTION 
+    <span *ngIf="loading$ | async">Loding. . . </span>
+</button>
 
 <h6>Your Content will show below asynchronously</h6>
-<code *ngIf="demoSelector$ | async as yourContent"> {{yourContent}}</code>
+<code *ngIf="demoSelector$ | async as your%store%/State">
+    {{your%store%/State}}
+</code>
     
 `
     return template;

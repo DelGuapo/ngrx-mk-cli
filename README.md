@@ -51,3 +51,33 @@ app.module.ts
         │   ├── otherStore/
         │   ├── anotherStore/
 ```
+
+## Output Sample
+```
+/* THANKS FOR USING THIS CLI.  HERE IS SOME SAMPLE CODE FOR YOUR NEW STORE */
+import { Store, select } from '@ngrx/store';
+import { APP_STORE } from './state/app.store';
+import { selKitchen, selLoading } from './state/kitchen/kitchen.selectors'
+import { ActionDemoTrigger } from './state/kitchen/kitchen.actions';
+import { Observable } from 'rxjs';
+
+demoSelector$: Observable<any>;
+loading$: Observable<boolean>;
+constructor(private store: Store<APP_STORE>) {
+    this.demoSelector$ = store.pipe(select(selKitchen));
+    this.loading$ = store.pipe(select(selLoading));
+}
+triggerYourEffect(){
+    this.store.dispatch(ActionDemoTrigger({ input: "Your Input Value" }));
+}
+
++++++++++++++[    IN YOUR COMPONENT HTML   ]++++++++++++++
+
+<button (click)="triggerYourEffect()">
+    TRIGGER YOUR ACTION 
+    <span *ngIf="loading$ | async">Loding. . .</span>
+</button>
+
+<h6>Your Content will show below asynchronously</h6>
+<code *ngIf="demoSelector$ | async as yourContent"> {{yourContent}}</code>`
+```
