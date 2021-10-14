@@ -1,21 +1,53 @@
 # ngrx-cli
-1. Clone the repo in your `/projects` folder
-    - `git clone https://github.com/DelGuapo/ngrx-mk-cli.git`
-1. Install dependencies
-    - `cd /ngrx-mk-cli`
-    - `npm i`
-1. Initialize your app to use NGRX.
-    - `node ngrx-cli.js init --project <<project-name>>`
-1. Add a store
-    - `node ngrx-cli.js addStore --project <<project-name>> --name <<store-name>>`
-1. Add an action into your store
-   - `node ngrx-cli.js addAction --project <<project-name>> --name <<action-name>> --store <<store-name>>`    
-
-# Example
+## Clone the repo in your `/projects` folder
+`git clone https://github.com/DelGuapo/ngrx-mk-cli.git`
+## Install dependencies
+`cd /ngrx-mk-cli`
+`npm i`
+## Initialize your app to use NGRX 
+`node ngrx-cli.js init --project <<project-name>>`
+- This creates your `state/` folder and registers your store in your @angular module
 ```
-node ngrx-cli.js init --project <<project-name>>
-node ngrx-cli.js addStore --project <<project-name>> --name kitchen
-node ngrx-cli.js addAction --project <<project-name>> --name prepare --store
-node ngrx-cli.js addAction --project <<project-name>> --name eat --store
-node ngrx-cli.js addAction --project <<project-name>> --name cleanup --store
+app.module.ts
+        .
+        ├── state/
+        │   ├── app.store.ts
+```
+## Add a store
+`node ngrx-cli.js addStore --project <<project-name>> --name <<store-name>>`
+- This creates a new directory containing redecurs, effects, selectors, models, etc...
+- Each file contains a peice of your new store with *Demo* functions
+```
+app.module.ts
+        .
+        ├── state/
+        │   ├── app.store.ts
+        │   ├── new/
+        │   │   ├── new.actions.ts      <<== Contains DemoTrigger, DemoResponse actions
+        │   │   ├── new.effects.ts      <<== Contains UponDemo$ chained effect
+        │   │   ├── new.module.ts       <<== Exports module to be used in your angular module
+        │   │   ├── new.reducers.ts     <<== contains onDemoTrigger, onDemoResponse reducers
+        │   │   ├── new.selectors.ts    <<== contains selectLoading$, selectNew selectors
+        │   │   ├── new.service.ts      <<== contains a sample service call with pipe-delay
+        │   ├── otherStore/
+        │   ├── anotherStore/
+```
+- The cli also returns sample code of how to use your new *ActionDemoTrigger*, and *SelectLoading* selector
+## Add an action into your store
+`node ngrx-cli.js addAction --project <<project-name>> --name <<action-name>> --store <<store-name>>`    
+- This creates new hooks into the store you provided
+```
+app.module.ts
+        .
+        ├── state/
+        │   ├── app.store.ts
+        │   ├── existing/
+        │   │   ├── existing.actions.ts      <<== Adds new ActionTrigger, ActionResponse
+        │   │   ├── existing.effects.ts      <<== Adds new UponAction$ chained effect
+        │   │   ├── existing.module.ts       
+        │   │   ├── existing.reducers.ts     <<== Adds new onActionTrigger, onActionResponse
+        │   │   ├── existing.selectors.ts    
+        │   │   ├── existing.service.ts      <<== Adds new Action function observable
+        │   ├── otherStore/
+        │   ├── anotherStore/
 ```
