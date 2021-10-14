@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const yargs = require('yargs');
 const rdx = require('./reduxHelper');
 const find = require('./find');

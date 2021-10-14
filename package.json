@@ -1,8 +1,8 @@
 {
-  "name": "ngrx-mk-cli",
+  "name": "ngrx-cli",
   "version": "1.0.0",
   "description": "cli used to help integrate a structured NGRX scaffolding into your angular module",
-  "main": "index.js",
+  "main": "ngrx-cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,5 +13,6 @@
     "yargs": "^17.2.1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "bin": "ngrx-cli.js"
 }
