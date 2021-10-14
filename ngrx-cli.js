@@ -68,7 +68,7 @@ const argv = yargs
         alias: 'apx',
         description: 'Prefix of Action',
         type: 'string',
-        default: "action"
+        default: "Action"
     })
     .option('effectPrefix', {
         alias: 'epx',
