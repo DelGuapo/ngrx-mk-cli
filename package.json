@@ -14,5 +14,7 @@
   },
   "author": "",
   "license": "ISC",
-  "bin": "ngrx-cli.js"
+  "bin": {
+    "ngrx-cli.js": "./ngrx-cli.js"
+  }
 }
