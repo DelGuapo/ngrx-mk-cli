@@ -290,15 +290,16 @@ triggerYourEffect(){
     this.store.dispatch(%ACTION_PREFIX%DemoTrigger({ input: "Your Input Value" }));
 }
 
-
+<!-- SAMPLE HTML CODE TRIGGERING YOUR NEW ACTION -->
 <button (click)="triggerYourEffect()">
     TRIGGER YOUR ACTION 
     <span *ngIf="loading$ | async">Loding. . . </span>
 </button>
 
+<!-- SAMPLE ASYNC PIPE TO SHOW YOUR APP-STATE -->
 <h6>Your Content will show below asynchronously</h6>
-<code *ngIf="demoSelector$ | async as your%store%/State">
-    {{your%store%/State}}
+<code *ngIf="demoSelector$ | async as your%store%State">
+    {{your%store%State}}
 </code>
     
 `

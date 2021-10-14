@@ -52,32 +52,46 @@ app.module.ts
         │   ├── anotherStore/
 ```
 
-## Output Sample
+## Sample
+`node ngrx-cli.js addStore --project <<your-project>> --name demoStore`
+
 ```
-/* THANKS FOR USING THIS CLI.  HERE IS SOME SAMPLE CODE FOR YOUR NEW STORE */
+Created file ..\..\state\demo\demo.effects.ts
+Created file ..\..\state\demo\demo.models.ts
+Created file ..\..\state\demo\demo.service.ts
+Created file ..\..\state\demo\demo.actions.ts
+Created file ..\..\state\demo\demo.module.ts
+Created file ..\..\state\demo\demo.reducers.ts
+Created file ..\..\state\demo\demo.selectors.ts
+/***************************************
+ * Thanks for using the CLI.  Here is sample code for your
+ * new [demo] store.
+ * ************************************/
 import { Store, select } from '@ngrx/store';
 import { APP_STORE } from './state/app.store';
-import { selKitchen, selLoading } from './state/kitchen/kitchen.selectors'
-import { ActionDemoTrigger } from './state/kitchen/kitchen.actions';
+import { selDemo, selLoading } from './state/demo/demo.selectors'
+import { ActionDemoTrigger } from './state/demo/demo.actions';
 import { Observable } from 'rxjs';
 
 demoSelector$: Observable<any>;
 loading$: Observable<boolean>;
 constructor(private store: Store<APP_STORE>) {
-    this.demoSelector$ = store.pipe(select(selKitchen));
+    this.demoSelector$ = store.pipe(select(selDemo));
     this.loading$ = store.pipe(select(selLoading));
 }
 triggerYourEffect(){
     this.store.dispatch(ActionDemoTrigger({ input: "Your Input Value" }));
 }
 
-+++++++++++++[    IN YOUR COMPONENT HTML   ]++++++++++++++
-
+<!-- SAMPLE HTML CODE TRIGGERING YOUR NEW ACTION -->
 <button (click)="triggerYourEffect()">
-    TRIGGER YOUR ACTION 
-    <span *ngIf="loading$ | async">Loding. . .</span>
+    TRIGGER YOUR ACTION
+    <span *ngIf="loading$ | async">Loding. . . </span>
 </button>
 
+<!-- SAMPLE ASYNC PIPE TO SHOW YOUR APP-STATE -->
 <h6>Your Content will show below asynchronously</h6>
-<code *ngIf="demoSelector$ | async as yourContent"> {{yourContent}}</code>`
+<code *ngIf="demoSelector$ | async as yourdemoState">
+    {{yourdemoState}}
+</code>
 ```
