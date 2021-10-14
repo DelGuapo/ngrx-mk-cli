@@ -275,6 +275,7 @@ import { Store, select } from '@ngrx/store';
 import { %PARENT_APP_STORE% } from './state/app.store';
 import { %SELECTOR_PREFIX%%STORE_UPPER%, %SELECTOR_PREFIX%Loading } from './state/%store%/%store%.selectors'
 import { %ACTION_PREFIX%DemoTrigger } from './state/%store%/%store%.actions';
+import { Observable } from 'rxjs';
 
 demoSelector$: Observable<any>;
 loading$: Observable<boolean>;
